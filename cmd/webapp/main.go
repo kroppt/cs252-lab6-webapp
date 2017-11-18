@@ -3,15 +3,9 @@
 package main
 
 import (
-	"fmt"
-	"net/http"
+	http "github.com/kroppt/cs252-lab6-webapp/http"
 )
 
-func handler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Hi there, I love %s!", r.URL.Path[1:])
-}
-
 func main() {
-	http.HandleFunc("/", handler)
-	http.ListenAndServe(":8080", nil)
+	http.StartServer(":8080")
 }
