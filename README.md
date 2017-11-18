@@ -16,12 +16,13 @@ cd cs252-lab6-webapp
 Run the code:
 
 ```
-go run webapp.go
+go run cmd/webapp/main.go
 ```
 or
  
 ```bash
-go build webapp.go
-./webapp
+go build cmd/webapp/main.go
+./main
 ```
  
+To test the program, open localhost:8080/\<text\>
