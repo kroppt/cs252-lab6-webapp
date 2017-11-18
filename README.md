@@ -25,4 +25,4 @@ go build cmd/webapp/main.go
 ./main
 ```
  
-To test the program, open localhost:8080/\<text\>
+To test the program, `curl -X POST -d '{"id": "test"}' http://localhost:8080/`, open localhost:8080/ to see "test".
