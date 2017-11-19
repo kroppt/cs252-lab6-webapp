@@ -5,6 +5,6 @@ import (
 )
 
 func StartServer(p string) {
-	r := NewRouter()
+	r := newRouter()
 	http.ListenAndServe(p, r)
 }

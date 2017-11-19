@@ -4,7 +4,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func NewRouter() *mux.Router {
+func newRouter() *mux.Router {
 	router := mux.NewRouter().StrictSlash(true)
 
 	for _, r := range routes {
