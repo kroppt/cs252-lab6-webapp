@@ -25,4 +25,10 @@ var routes = []route{
 		api.PostID,
 		"PostID",
 	},
+	route{
+		"/testdb",
+		[]string{"GET"},
+		api.TestDB,
+		"TestDB",
+	},
 }
