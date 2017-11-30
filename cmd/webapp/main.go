@@ -12,7 +12,7 @@ import (
 
 func main() {
 	var err error
-	db, err := sql.Open("mysql", "/")
+	db, err := sql.Open("mysql", "server:server@/test")
 	if err != nil {
 		log.Fatal(err)
 	}

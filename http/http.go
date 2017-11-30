@@ -1,10 +1,13 @@
 package http
 
 import (
+	"log"
 	"net/http"
 )
 
 func StartServer(p string) {
 	r := newRouter()
-	http.ListenAndServe(p, r)
+	if err := http.ListenAndServe(p, r); err != nil {
+		log.Fatal(err)
+	}
 }
