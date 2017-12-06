@@ -4,8 +4,7 @@ import (
 	"database/sql"
 )
 
-type DataBase struct {
-	*sql.DB
+// DataBase stores a pointer to the SQL Database.
+var DataBase struct {
+	DB *sql.DB
 }
-
-var DB *DataBase

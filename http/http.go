@@ -5,9 +5,13 @@ import (
 	"net/http"
 )
 
+// StartServer will start the server using the given port string.
+// Example: http.StartServer(":8080")
 func StartServer(p string) {
 	r := newRouter()
-	if err := http.ListenAndServe(p, r); err != nil {
-		log.Fatal(err)
-	}
+	checkError(http.ListenAndServe(p, r))
+}
+
+func checkError(err error) {
+	log.Fatal(err)
 }
