@@ -7,12 +7,17 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	http "github.com/kroppt/cs252-lab6-webapp/http"
 	webapp "github.com/kroppt/cs252-lab6-webapp/webapp"
+	"io/ioutil"
 	"log"
 )
 
 func main() {
 	var err error
-	db, err := sql.Open("mysql", "server:server@/test")
+	pass, err := ioutil.ReadFile("pass.txt")
+	if err != nil {
+		log.Fatal(err)
+	}
+	db, err := sql.Open("mysql", "server:"+string(pass)[:len(pass)-1]+"@/test")
 	if err != nil {
 		log.Fatal(err)
 	}
