@@ -1,11 +1,15 @@
-# cs252-lab6-webapp
+## cs252-lab6-webapp
 Implementation of a web application using HTML5 and cloud services
 
 ### Prerequisites
 
 [golang](https://golang.org/project/)
 
+[npm](https://www.npmjs.com/)
+
 ### Running
+
+#### Backend
 
 Fetch the code
 ```
@@ -26,3 +30,12 @@ go build cmd/webapp/main.go
 ```
  
 To test the program, `curl -X POST -d '{"id": "test"}' http://localhost:8080/`, open localhost:8080/ to see "test".
+
+#### Webapp
+
+With angular/cli:
+```
+cd angular
+ng serve --open
+```
+Opens in browser.
