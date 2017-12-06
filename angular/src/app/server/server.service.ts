@@ -18,9 +18,9 @@ export class ServerService {
       .subscribe();
     return '';
   }
-  logoutUser(username, password): string {
+  logoutUser(): string {
     this.http
-      .post(this.apiRoot + '/logoutUser', { username: username })
+      .post(this.apiRoot + '/logoutUser', {})
       .subscribe();
     return '';
   }

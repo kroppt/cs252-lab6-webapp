@@ -2,6 +2,7 @@ package api
 
 import (
 	"crypto/rand"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -34,6 +35,9 @@ func AuthUser(w http.ResponseWriter, r *http.Request) {
 	err := decoder.Decode(data)
 	checkError(err)
 
+	pass10, err := base64.StdEncoding.DecodeString(data.Password)
+	data.Password = string(pass10)
+
 	hash, err := bcrypt.GenerateFromPassword([]byte(data.Password),
 		bcrypt.MaxCost)
 	checkError(err)
@@ -57,7 +61,7 @@ func AuthUser(w http.ResponseWriter, r *http.Request) {
 	checkError(err)
 
 	var output struct {
-		Success bool
+		Success bool `json:"success"`
 	}
 	if rowData.PasswordHash == string(hash) {
 		expireCookie := time.Now().Add(time.Hour * 1)
@@ -101,6 +105,9 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 	err := decoder.Decode(data)
 	checkError(err)
 
+	pass10, err := base64.StdEncoding.DecodeString(data.Password)
+	data.Password = string(pass10)
+
 	hash, err := bcrypt.GenerateFromPassword([]byte(data.Password),
 		bcrypt.MaxCost)
 	checkError(err)
@@ -124,7 +131,7 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 
 	if string(hash) != rowData.PasswordHash {
 		var output struct {
-			Success bool
+			Success bool `json:"success"`
 		}
 		output.Success = false
 		out, err := json.Marshal(output)
@@ -154,7 +161,7 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 		HttpOnly: true,
 	}
 	var output struct {
-		Success bool
+		Success bool `json:"success"`
 	}
 	output.Success = true
 	out, err := json.Marshal(output)
@@ -177,7 +184,7 @@ func LogoutUser(w http.ResponseWriter, r *http.Request) {
 	deleteCookie := http.Cookie{Name: "Auth", Value: "none", Expires: time.Now()}
 	http.SetCookie(w, &deleteCookie)
 	var output struct {
-		Success bool
+		Success bool `json:"success"`
 	}
 	output.Success = true
 	out, err := json.Marshal(output)
@@ -194,6 +201,9 @@ func NewUser(w http.ResponseWriter, r *http.Request) {
 	var data *UserModel
 	err := decoder.Decode(data)
 	checkError(err)
+
+	pass10, err := base64.StdEncoding.DecodeString(data.Password)
+	data.Password = string(pass10)
 
 	hash, err := bcrypt.GenerateFromPassword([]byte(data.Password), bcrypt.MaxCost)
 	checkError(err)
@@ -223,7 +233,7 @@ func NewUser(w http.ResponseWriter, r *http.Request) {
 		HttpOnly: true}
 	http.SetCookie(w, &cookie)
 	var output struct {
-		Success bool
+		Success bool `json:"success"`
 	}
 	output.Success = true
 	out, err := json.Marshal(output)
