@@ -3,6 +3,7 @@ import { NgModule } from '@angular/core';
 import { AppComponent } from './app.component';
 import { LoginComponent } from './login/login.component';
 import { HomeComponent } from './home/home.component';
+import { HttpModule } from '@angular/http';
 import 'hammerjs';
 
 import {
@@ -28,6 +29,7 @@ export class MaterialModule {}
   ],
   imports: [
     BrowserModule,
+    HttpModule,
     MaterialModule
   ],
   providers: [],
