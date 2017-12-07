@@ -1,5 +1,5 @@
 
-.home, .login {
+.home, .signup, .login {
   top: 10px;
   position: fixed;
 }
@@ -8,6 +8,9 @@
 }
 .login {
   right: 10px;
+}
+.signup {
+  right: 110px;
 }
 
 .toolbar {
