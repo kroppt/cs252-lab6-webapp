@@ -1,14 +1,24 @@
+@import url('https://fonts.googleapis.com/css?family=Vollkorn+SC');
+
 .item {
   display: flex;
   align-items: center;
   justify-content: center;
   height: 100%;
 }
+
 .left {
   float: left;
 }
+
 .right {
   float: right;
+}
+
+.title-text {
+  font-family: 'Vollkorn SC', serif;
+  font-size: 32px;
+  margin-left: 25px;
 }
 
 .toolbar {
