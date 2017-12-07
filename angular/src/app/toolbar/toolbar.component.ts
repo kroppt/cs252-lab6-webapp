@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewEncapsulation } from '@angular/core';
 import { CookieService } from 'ngx-cookie-service';
 import { Router } from '@angular/router';
 
@@ -20,7 +20,7 @@ export class ToolbarComponent implements  OnInit {
     }
   }
   home(): void {
-    this.router.navigateByUrl('/');
+    this.router.navigateByUrl('/home');
   }
   login(): void {
     this.router.navigateByUrl('/login');

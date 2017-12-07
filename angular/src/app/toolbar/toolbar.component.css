@@ -1,17 +1,23 @@
-.toolbar .item {
-  top: 10px;
-  position: fixed;
+.item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
 }
 .left {
-  left: 10px;
+  float: left;
 }
 .right {
-  right: 10px;
+  float: right;
 }
 
 .toolbar {
   top: 0;
   left: 0;
   height: 60px;
-  position: fixed;
+  display: block;
+}
+
+.item > button {
+  margin: 5px;
 }

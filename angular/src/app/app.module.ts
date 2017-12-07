@@ -1,7 +1,9 @@
 import { BrowserModule } from '@angular/platform-browser';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { NgModule } from '@angular/core';
 import { AppComponent } from './app.component';
 import { LoginComponent } from './login/login.component';
+import { HomeComponent } from './home/home.component';
 import { RegisterComponent } from './register/register.component';
 import { AccountComponent } from './account/account.component';
 import { NewEntryComponent } from './new-entry/new-entry.component';
@@ -105,8 +107,12 @@ const appRoutes: Routes = [
   },
   {
     path: '',
-    redirectTo: '/',
     pathMatch: 'full',
+    redirectTo: '/home',
+  },
+  {
+    path: 'home',
+    component: HomeComponent,
   },
   {
     path: '**',
@@ -118,6 +124,7 @@ const appRoutes: Routes = [
   declarations: [
     AppComponent,
     LoginComponent,
+    HomeComponent,
     SignupComponent,
     RegisterComponent,
     AccountComponent,
@@ -127,6 +134,7 @@ const appRoutes: Routes = [
   ],
   imports: [
     BrowserModule,
+    BrowserAnimationsModule,
     HttpModule,
     FormsModule,
     ReactiveFormsModule,

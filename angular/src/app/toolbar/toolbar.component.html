@@ -1,7 +1,9 @@
 <mat-toolbar class="toolbar" color="primary">
-  <button (click)="home()" class="item left" mat-icon-button>
-    <mat-icon color="link">home</mat-icon>
-  </button>
+  <div class="item left">
+    <button (click)="home()" mat-icon-button>
+      <mat-icon color="link">home</mat-icon>
+    </button>
+  </div>
   <div class="item right" *ngIf="this.isLoggedIn">
     <button (click)="newEntry()" mat-raised-button color="accent">New Entry</button>
     <button (click)="logout()" mat-raised-button color="accent">Logout</button>
