@@ -1,2 +1,36 @@
-<div>
-</div>
+<mat-card class="card">
+  <mat-card-header class="card-header">
+    <mat-card-title>Login</mat-card-title>
+  </mat-card-header>
+  <mat-form-field class="form">
+    <input matInput placeholder="Username" [formControl]="username" required>
+    <mat-error *ngIf="username.invalid">
+      <span *ngIf="username.errors.required">
+            Username is required.
+          </span>
+      <span *ngIf="username.errors.minlength">
+            Username must be at least 6 characters long.
+          </span>
+      <span *ngIf="username.errors.maxlength">
+            Username must be less than 20 characters long.
+          </span>
+    </mat-error>
+  </mat-form-field>
+  <mat-form-field class="form">
+    <input matInput placeholder="Password" [formControl]="password" required>
+    <mat-error *ngIf="password.invalid">
+      <span *ngIf="password.errors.required">
+            Password is required.
+          </span>
+      <span *ngIf="password.errors.minlength">
+            Password must be at least 10 characters long.
+          </span>
+      <span *ngIf="password.errors.maxlength">
+            Password must be less than 50 characters long.
+          </span>
+    </mat-error>
+  </mat-form-field>
+  <mat-card-actions style="padding-bottom: 10px;" class="submit">
+    <button [disabled]="username.invalid || password.invalid" (click)="submit()" mat-raised-button color="primary">Submit</button>
+  </mat-card-actions>
+</mat-card>
