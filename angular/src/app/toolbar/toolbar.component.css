@@ -1,0 +1,17 @@
+.toolbar .item {
+  top: 10px;
+  position: fixed;
+}
+.left {
+  left: 10px;
+}
+.right {
+  right: 10px;
+}
+
+.toolbar {
+  top: 0;
+  left: 0;
+  height: 60px;
+  position: fixed;
+}

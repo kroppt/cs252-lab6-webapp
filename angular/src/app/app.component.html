@@ -1,27 +1,16 @@
 <html ng-app="myApp">
+
 <div ng-controller="reloadCtrl">
- <mat-toolbar class="toolbar" color="primary">
-    <app-home class="home">Home</app-home>
-    <app-signup class="signup"></app-signup>
-    <app-login class="login"></app-login>
-
-
-
-    <app-newProject class="newProject"  ng-click="count = count +1">New Project</app-newProject>
-    <p>num here {{count}}</p>
-
-
-
-  </mat-toolbar>
-<iframe style="position: absolute; height: 75%; width: 75%; top: 75px; border: none text-align: center" src={{webURL}}></iframe>
+<app-toolbar class="toolbar" color="primary">
+</app-toolbar>
+<iframe style="position: absolute; height: 75%; width: 75%; top: 75px; border: none; text-align: center" src={{webURL}}></iframe>
 </div>
 
-
-
 <script>
-function myFunc(){
-document.getElementById("demo").innerHTML = "Hello World";
-}
+  function myFunc(){
+    document.getElementById("demo").innerHTML = "Hello World";
+  }
+</script>
 <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.0/angular.min.js"></script>
 <script src="app.js"></script>
 </html>

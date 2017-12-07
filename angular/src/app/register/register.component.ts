@@ -1,9 +1,13 @@
 import { Component } from '@angular/core';
 import {
-  FormGroup,
+  FormsModule,
   FormControl,
+  FormGroup,
+  ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material';
 import { Http } from '@angular/http';
 import { passwordMatchValidator } from '../shared/password-match.directive';
 
