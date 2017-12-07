@@ -1,11 +1,21 @@
-<div ng-controller="reloadCtrl">
-  <iframe style="position: absolute; height: 75%; width: 75%; top: 75px; border: none; text-align: center" src="http://pablotheflamingo.com/"></iframe>
+<div >
+  <iframe style="float: right = 0; position: absolute; height: 75%; width: 75%; top: 75px;  border: none;" src="http://pablotheflamingo.com/"></iframe>
 </div>
 
-<script src="../app.js"></script>
+<head>
+<style>
+.footer {
+   position: fixed;
+   left: 0;
+   bottom: 0;
+   width: 100%;
+   color: grey;
+   text-align: center;
+}
+</style>
+</head>
+<body>
+<div class="footer">
+  <p>Created by Tyler Kropp, Brandon Schipper, and Jason Jia</p>
+</div>
 
-<script>
-  function myFunc(){
-    document.getElementById("demo").innerHTML = "Hello World";
-  }
-</script>
