@@ -5,7 +5,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"time"
 
@@ -33,32 +32,47 @@ func AuthUser(w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
 	var data *UserModel
 	err := decoder.Decode(data)
-	checkError(err)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
 
 	pass10, err := base64.StdEncoding.DecodeString(data.Password)
 	data.Password = string(pass10)
 
 	hash, err := bcrypt.GenerateFromPassword([]byte(data.Password),
 		bcrypt.MaxCost)
-	checkError(err)
+	if err != nil {
+		w.WriteHeader(http.StatusUnprocessableEntity)
+		return
+	}
 
 	// check that conversion back is successful
 	err = bcrypt.CompareHashAndPassword([]byte(hash), []byte(data.Password))
-	checkError(err)
+	if err != nil {
+		w.WriteHeader(http.StatusUnprocessableEntity)
+		return
+	}
 
 	rows, err := webapp.DataBase.DB.Query(
 		"SELECT User.PasswordHash, UserSession.SessionKey FROM User LEFT JOIN" +
 			" UserSession ON (User.ID=UserSession.UserID) WHERE Username=" +
 			data.Username)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 	defer rows.Close()
-	checkError(err)
 
 	var rowData struct {
 		PasswordHash string
 		SessionKey   string
 	}
 	err = rows.Scan(&rowData)
-	checkError(err)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 
 	var output struct {
 		Success bool `json:"success"`
@@ -74,13 +88,19 @@ func AuthUser(w http.ResponseWriter, r *http.Request) {
 		http.SetCookie(w, &cookie)
 		output.Success = true
 		out, err := json.Marshal(output)
-		checkError(err)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
 		w.WriteHeader(http.StatusOK)
 		w.Write(out)
 	} else {
 		output.Success = false
 		out, err := json.Marshal(output)
-		checkError(err)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
 		w.WriteHeader(http.StatusOK)
 		w.Write(out)
 	}
@@ -103,18 +123,27 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
 	var data *UserModel
 	err := decoder.Decode(data)
-	checkError(err)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
 
 	pass10, err := base64.StdEncoding.DecodeString(data.Password)
 	data.Password = string(pass10)
 
 	hash, err := bcrypt.GenerateFromPassword([]byte(data.Password),
 		bcrypt.MaxCost)
-	checkError(err)
+	if err != nil {
+		w.WriteHeader(http.StatusUnprocessableEntity)
+		return
+	}
 
 	// check that conversion back is successful
 	err = bcrypt.CompareHashAndPassword([]byte(hash), []byte(data.Password))
-	checkError(err)
+	if err != nil {
+		w.WriteHeader(http.StatusUnprocessableEntity)
+		return
+	}
 
 	const mySQLDateTime = "2006-01-02 15:04:05"
 	currTime := time.Now().Format(mySQLDateTime)
@@ -127,7 +156,10 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 		PasswordHash string
 	}
 	err = rows.Scan(&rowData)
-	checkError(err)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 
 	if string(hash) != rowData.PasswordHash {
 		var output struct {
@@ -135,7 +167,10 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 		}
 		output.Success = false
 		out, err := json.Marshal(output)
-		checkError(err)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
 		w.WriteHeader(http.StatusOK)
 		w.Write(out)
 		return
@@ -145,14 +180,20 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 
 	key := make([]byte, 50)
 	_, err = rand.Read(key)
-	checkError(err)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 
 	rows, err = webapp.DataBase.DB.Query(
 		"INSERT INTO UserSession (SessionKey," +
 			" UserID," + " LoginTime, LastSeenTime) VALUES(" + string(key) +
 			", LAST_INSERT_ID(), " + currTime + ", " + currTime + ");")
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 	defer rows.Close()
-	checkError(err)
 
 	cookie := http.Cookie{
 		Name:     "Auth",
@@ -165,9 +206,12 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 	}
 	output.Success = true
 	out, err := json.Marshal(output)
-	checkError(err)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 	http.SetCookie(w, &cookie)
-	http.Redirect(w, r, "/", 307)
+	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 	w.Write(out)
 }
 
@@ -175,12 +219,15 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 func LogoutUser(w http.ResponseWriter, r *http.Request) {
 	cookie, err := r.Cookie("Auth")
 	if err != nil {
-		http.NotFound(w, r)
+		w.WriteHeader(http.StatusNotModified)
 		return
 	}
 	_, err = webapp.DataBase.DB.Query(
 		"DELETE FROM User WHERE UserSession.SessionKey=" + cookie.Value)
-	checkError(err)
+	if err != nil {
+		w.WriteHeader(http.StatusNotModified)
+		return
+	}
 	deleteCookie := http.Cookie{Name: "Auth", Value: "none", Expires: time.Now()}
 	http.SetCookie(w, &deleteCookie)
 	var output struct {
@@ -188,7 +235,10 @@ func LogoutUser(w http.ResponseWriter, r *http.Request) {
 	}
 	output.Success = true
 	out, err := json.Marshal(output)
-	checkError(err)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 	w.WriteHeader(http.StatusOK)
 	w.Write(out)
 	return
@@ -200,23 +250,39 @@ func NewUser(w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
 	var data *UserModel
 	err := decoder.Decode(data)
-	checkError(err)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
 
 	pass10, err := base64.StdEncoding.DecodeString(data.Password)
+	if err != nil {
+		w.WriteHeader(http.StatusUnprocessableEntity)
+		return
+	}
 	data.Password = string(pass10)
 
 	hash, err := bcrypt.GenerateFromPassword([]byte(data.Password), bcrypt.MaxCost)
-	checkError(err)
+	if err != nil {
+		w.WriteHeader(http.StatusUnprocessableEntity)
+		return
+	}
 
 	// check that conversion back is successful
 	err = bcrypt.CompareHashAndPassword([]byte(hash), []byte(data.Password))
-	checkError(err)
+	if err != nil {
+		w.WriteHeader(http.StatusUnprocessableEntity)
+		return
+	}
 
 	expireCookie := time.Now().Add(time.Hour * 1)
 
 	key := make([]byte, 50)
 	_, err = rand.Read(key)
-	checkError(err)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 
 	const mySQLDateTime = "2006-01-02 15:04:05"
 	currTime := time.Now().Format(mySQLDateTime)
@@ -226,8 +292,11 @@ func NewUser(w http.ResponseWriter, r *http.Request) {
 			", " + string(hash) + "); INSERT INTO UserSession (SessionKey," +
 			" UserID," + " LoginTime, LastSeenTime) VALUES(" + string(key) +
 			", LAST_INSERT_ID(), " + currTime + ", " + currTime + ");")
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 	defer rows.Close()
-	checkError(err)
 
 	cookie := http.Cookie{Name: "Auth", Value: string(key), Expires: expireCookie,
 		HttpOnly: true}
@@ -237,8 +306,11 @@ func NewUser(w http.ResponseWriter, r *http.Request) {
 	}
 	output.Success = true
 	out, err := json.Marshal(output)
-	checkError(err)
-	http.Redirect(w, r, "/", 307)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 	w.Write(out)
 }
 
@@ -247,7 +319,10 @@ func NewUser(w http.ResponseWriter, r *http.Request) {
 func PostID(w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
 	err := decoder.Decode(&storedID)
-	checkError(err)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
 	fmt.Print("POST ")
 	fmt.Println(storedID)
 	w.WriteHeader(http.StatusOK)
@@ -257,17 +332,23 @@ func PostID(w http.ResponseWriter, r *http.Request) {
 // TestDB will grab test data from the database.
 // For testing purposes.
 func TestDB(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusOK)
 	rows, err := webapp.DataBase.DB.Query("SELECT * FROM list")
-	checkError(err)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 	defer rows.Close()
 	fmt.Fprintf(w, "list results:\n")
 	for rows.Next() {
 		var line string
 		err := rows.Scan(&line)
-		checkError(err)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
 		fmt.Fprintf(w, "%s\n", line)
 	}
+	w.WriteHeader(http.StatusOK)
 	return
 }
 
@@ -276,7 +357,7 @@ func Validate(handler http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		cookie, err := r.Cookie("Auth")
 		if err != nil {
-			http.NotFound(w, r)
+			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
 		// SessionKey
@@ -284,32 +365,36 @@ func Validate(handler http.HandlerFunc) http.HandlerFunc {
 			DataBase.DB.Query("SELECT User.ID, UserSession.SessionKey" +
 			" FROM User LEFT JOIN UserSession ON (User.ID=UserSession.UserID)" +
 			" WHERE UserSession.SessionKey=" + cookie.Value)
-		checkError(err)
+		if err != nil {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
 		var data struct {
 			UserID     int
 			SessionKey string
 		}
 		err = rows.Scan(&data)
-		checkError(err)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
 		rows.Close()
 		if data.SessionKey == cookie.Value {
 			const mySQLDateTime = "2006-01-02 15:04:05"
 			currTime := time.Now().Format(mySQLDateTime)
 			_, err = webapp.DataBase.DB.Query("UPDATE UserSession SET LastSeenTime=" +
 				currTime + " WHERE UserSession.UserID=" + string(data.UserID))
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
 			handler(w, r)
 		} else {
 			deleteCookie := http.Cookie{Name: "Auth", Value: "none",
 				Expires: time.Now()}
 			http.SetCookie(w, &deleteCookie)
-			w.WriteHeader(http.StatusOK)
+			w.WriteHeader(http.StatusUnauthorized)
 		}
 		return
 	})
-}
-
-func checkError(err error) {
-	if err != nil {
-		log.Fatal(err)
-	}
 }
