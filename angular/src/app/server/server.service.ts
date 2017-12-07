@@ -8,7 +8,10 @@ export class ServerService {
   authUser(username, password): string {
     this.http
       .post(this.apiRoot + '/authUser',
-      { username: username, password: btoa(password) })
+      {
+        username: username,
+        password: btoa(password),
+      })
       .subscribe();
     return '';
   }
@@ -27,7 +30,10 @@ export class ServerService {
   newUser(username, password): string {
     this.http
       .post(this.apiRoot + '/newUser',
-      { username: username, password: btoa(password) })
+      {
+        username: username,
+        password: btoa(password),
+      })
       .subscribe();
     return '';
   }
