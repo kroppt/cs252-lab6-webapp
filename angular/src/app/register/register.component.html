@@ -1,5 +1,8 @@
-<div class="example-container">
-  <mat-form-field>
+<mat-card class="card">
+  <mat-card-header class="card-header">
+    <mat-card-title>Register New Account</mat-card-title>
+  </mat-card-header>
+  <mat-form-field class="form">
     <input matInput placeholder="Username" [formControl]="username" required>
     <mat-error *ngIf="username.invalid">
       <span *ngIf="username.errors.required">
@@ -13,7 +16,7 @@
           </span>
     </mat-error>
   </mat-form-field>
-  <mat-form-field>
+  <mat-form-field class="form">
     <input matInput placeholder="Password" [formControl]="password" required>
     <mat-error *ngIf="password.invalid">
       <span *ngIf="password.errors.required">
@@ -27,7 +30,7 @@
           </span>
     </mat-error>
   </mat-form-field>
-  <mat-form-field>
+  <mat-form-field class="form">
     <input matInput placeholder="Verify Password" [formControl]="passwordVerify" required>
     <mat-error *ngIf="passwordVerify.invalid">
       <span *ngIf="passwordVerify.errors.nomatch">
@@ -35,4 +38,7 @@
           </span>
     </mat-error>
   </mat-form-field>
-</div>
+  <mat-card-actions style="padding-bottom: 10px;" class="submit">
+    <button [disabled]="username.invalid || password.invalid || passwordVerify.invalid" (click)="submit()" mat-raised-button color="primary">Submit</button>
+  </mat-card-actions>
+</mat-card>

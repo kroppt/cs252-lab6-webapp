@@ -7,13 +7,13 @@ import {
   Validators,
 } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material';
 import { Http } from '@angular/http';
 import { passwordMatchValidator } from '../shared/password-match.directive';
 
 @Component({
   selector: 'app-register',
   templateUrl: './register.component.html',
+  styleUrls: ['./register.component.css'],
 })
 export class RegisterComponent {
   title = 'register';
@@ -47,12 +47,15 @@ export class RegisterComponent {
 
   submit() {
     this.http
-      .post('35.227.48.112/api/newUser',
+      .post('http://35.227.48.112/api/newUser',
       {
         username: this.username.value,
         password: btoa(this.password.value),
       })
-      .subscribe();
+      .subscribe(data => {
+        console.log(data);
+      });
+    console.log();
     return;
   }
 
