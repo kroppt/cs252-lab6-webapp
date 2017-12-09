@@ -7,35 +7,22 @@ Implementation of a web application using HTML5 and cloud services
 
 [npm](https://www.npmjs.com/)
 
-### Running
+### Webapp
 
-#### Backend
-
-Fetch the code
+#### Fetch the code
 ```
 git clone https://github.com/kroppt/cs252-lab6-webapp
 cd cs252-lab6-webapp
 ```
-
-Run the code:
-
+#### Install node dependencies
 ```
-go run cmd/webapp/main.go
-```
-or
- 
-```bash
-go build cmd/webapp/main.go
-./main
-```
- 
-To test the program, `curl -X POST -d '{"id": "test"}' http://localhost:8080/`, open localhost:8080/ to see "test".
-
-#### Webapp
-
-With angular/cli:
-```
+npm install --global @angular/cli
 cd angular
+npm install
+```
+Note: when running install, 2 warnings may appear relating to `@angular-devkit/schematics`. They can be safely ignored.
+#### Run the server
+```
 ng serve --open
 ```
 Opens in browser.
