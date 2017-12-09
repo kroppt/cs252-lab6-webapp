@@ -140,14 +140,14 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 	data.Password = string(pass10)
 
 	l := len(data.Username)
-	if !(l < 20 && l > 6) {
+	if !(l <= 20 && l >= 6) {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte("Invalid username or password"))
 		return
 	}
 
 	l = len(data.Password)
-	if !(l < 50 && l > 10) {
+	if !(l <= 50 && l >= 10) {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte("Invalid username or password"))
 		return
@@ -212,7 +212,7 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	http.SetCookie(w, &cookie)
-	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+	w.WriteHeader(http.StatusOK)
 }
 
 // LogoutUser logs out the verified user, if possible.
@@ -254,14 +254,14 @@ func NewUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	l := len(data.Username)
-	if !(l < 20 && l > 6) {
+	if !(l <= 20 && l >= 6) {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte("Incorrect username length"))
 		return
 	}
 
 	l = len(data.Password)
-	if !(l < 50 && l > 10) {
+	if !(l <= 50 && l >= 10) {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte("Incorrect password length"))
 		return
@@ -340,7 +340,7 @@ func NewUser(w http.ResponseWriter, r *http.Request) {
 	cookie := http.Cookie{Name: "Auth", Value: string(key), Expires: expireCookie,
 		HttpOnly: true}
 	http.SetCookie(w, &cookie)
-	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+	w.WriteHeader(http.StatusOK)
 }
 
 // PostID will store the string to ID. The ID can be fetched using GetID.

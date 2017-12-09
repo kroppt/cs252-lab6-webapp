@@ -10,6 +10,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { Http } from '@angular/http';
 import { passwordMatchValidator } from '../shared/password-match.directive';
 import { MatSnackBar } from '@angular/material';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-register',
@@ -19,7 +20,7 @@ import { MatSnackBar } from '@angular/material';
 export class RegisterComponent {
   title = 'register';
 
-  constructor(private http: Http, private snackBar: MatSnackBar) { }
+  constructor(private router:Router, private http: Http, private snackBar: MatSnackBar) { }
 
   username = new FormControl(
     '',
@@ -54,15 +55,22 @@ export class RegisterComponent {
         password: btoa(this.password.value),
       })
       .subscribe(
-        data => {
-          console.log(data);
-        },
-        err => {
-          this.snackBar.open(err._body, 'OK', {
-            duration: 2000,
-          });
+      data => {
+        this.router.navigate(['/']);
+      },
+      err => {
+        let message: string;
+        if (err.status === 0) {
+          message = 'Connection error';
+        } else if (err.status / 500 >= 1) {
+          message = 'Server error';
+        } else {
+          message = err._body;
+        }
+        this.snackBar.open(message, 'OK', {
+          duration: 2000,
         });
-    console.log();
+      });
     return;
   }
 

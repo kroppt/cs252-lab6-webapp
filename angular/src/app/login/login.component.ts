@@ -8,6 +8,8 @@ import {
 } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { Http } from '@angular/http';
+import { MatSnackBar } from '@angular/material';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-login',
@@ -17,7 +19,7 @@ import { Http } from '@angular/http';
 export class LoginComponent {
   title = 'login';
 
-  constructor(private http: Http) { }
+  constructor(private router:Router, private http: Http, private snackBar: MatSnackBar) { }
 
   username = new FormControl(
     '',
@@ -39,15 +41,28 @@ export class LoginComponent {
 
   submit() {
     this.http
-      .post('http://35.227.48.112/api/login',
+      .post('http://35.227.48.112/api/loginUser',
       {
         username: this.username.value,
         password: btoa(this.password.value),
       })
-      .subscribe(data => {
-        console.log(data);
+      .subscribe(
+      data => {
+        this.router.navigate(['/']);
+      },
+      err => {
+        let message: string;
+        if (err.status === 0) {
+          message = 'Connection error';
+        } else if (err.status / 500 >= 1) {
+          message = 'Server error';
+        } else {
+          message = err._body;
+        }
+        this.snackBar.open(message, 'OK', {
+          duration: 2000,
+        });
       });
-    console.log();
     return;
   }
 }
