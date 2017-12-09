@@ -130,71 +130,72 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	pass10, err := base64.StdEncoding.DecodeString(data.Password)
+	if err != nil {
+		w.WriteHeader(http.StatusUnprocessableEntity)
+		return
+	}
 	data.Password = string(pass10)
 
-	hash, err := bcrypt.GenerateFromPassword([]byte(data.Password),
-		bcrypt.MaxCost)
-	if err != nil {
-		w.WriteHeader(http.StatusUnprocessableEntity)
+	l := len(data.Username)
+	if !(l < 20 && l > 6) {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte("Invalid username or password"))
 		return
 	}
 
-	// check that conversion back is successful
-	err = bcrypt.CompareHashAndPassword([]byte(hash), []byte(data.Password))
-	if err != nil {
-		w.WriteHeader(http.StatusUnprocessableEntity)
+	l = len(data.Password)
+	if !(l < 50 && l > 10) {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte("Invalid username or password"))
 		return
 	}
 
-	const mySQLDateTime = "2006-01-02 15:04:05"
-	currTime := time.Now().Format(mySQLDateTime)
-
-	rows, err := webapp.DataBase.DB.Query("SELECT ID, PasswordHash FROM" +
-		"User WHERE Username=" + data.Username)
+	// Find hashed password for username
+	row := webapp.DataBase.DB.QueryRow(
+		"SELECT ID, PasswordHash FROM User WHERE Username=?", data.Username)
 
 	var rowData struct {
 		ID           int
 		PasswordHash string
 	}
-	err = rows.Scan(&rowData)
+	err = row.Scan(&rowData)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	if string(hash) != rowData.PasswordHash {
-		var output struct {
-			Success bool `json:"success"`
-		}
-		output.Success = false
-		out, err := json.Marshal(output)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-		w.WriteHeader(http.StatusOK)
-		w.Write(out)
+	// check that the password matches the hash
+	err = bcrypt.CompareHashAndPassword([]byte(rowData.PasswordHash),
+		[]byte(data.Password))
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte("Invalid username or password"))
 		return
 	}
+
+	key := (func() []byte {
+		const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ" +
+			"0123456789"
+		seededRand := rand.New(rand.NewSource(time.Now().UnixNano()))
+		k := make([]byte, 50)
+		for i := range k {
+			k[i] = charset[seededRand.Intn(len(charset))]
+		}
+		return k
+	})()
 
 	expireCookie := time.Now().Add(time.Hour * 1)
 
-	key := make([]byte, 50)
-	_, err = rand.Read(key)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
+	const timeFormat = "2006-01-02 15:04:05"
+	currTime := time.Now().Format(timeFormat)
 
-	rows, err = webapp.DataBase.DB.Query(
-		"INSERT INTO UserSession (SessionKey," +
-			" UserID," + " LoginTime, LastSeenTime) VALUES(" + string(key) +
-			", LAST_INSERT_ID(), " + currTime + ", " + currTime + ");")
+	_, err = webapp.DataBase.DB.Exec("REPLACE INTO UserSession (SessionKey, "+
+		"UserID, LoginTime, LastSeenTime) VALUES (?, ?, ?, ?)", string(key),
+		currTime, rowData.ID, currTime, currTime)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	defer rows.Close()
 
 	cookie := http.Cookie{
 		Name:     "Auth",
@@ -202,18 +203,12 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 		Expires:  expireCookie,
 		HttpOnly: true,
 	}
-	var output struct {
-		Success bool `json:"success"`
-	}
-	output.Success = true
-	out, err := json.Marshal(output)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 	http.SetCookie(w, &cookie)
 	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
-	w.Write(out)
 }
 
 // LogoutUser logs out the verified user, if possible.
@@ -229,19 +224,17 @@ func LogoutUser(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotModified)
 		return
 	}
-	deleteCookie := http.Cookie{Name: "Auth", Value: "none", Expires: time.Now()}
-	http.SetCookie(w, &deleteCookie)
-	var output struct {
-		Success bool `json:"success"`
+	deleteCookie := http.Cookie{
+		Name:    "Auth",
+		Value:   "none",
+		Expires: time.Now(),
 	}
-	output.Success = true
-	out, err := json.Marshal(output)
+	http.SetCookie(w, &deleteCookie)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 	w.WriteHeader(http.StatusOK)
-	w.Write(out)
 	return
 }
 
@@ -259,14 +252,14 @@ func NewUser(w http.ResponseWriter, r *http.Request) {
 	l := len(data.Username)
 	if !(l < 20 && l > 6) {
 		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte("Incorrect username length."))
+		w.Write([]byte("Incorrect username length"))
 		return
 	}
 
 	l = len(data.Password)
 	if !(l < 50 && l > 10) {
 		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte("Incorrect password length."))
+		w.Write([]byte("Incorrect password length"))
 		return
 	}
 
@@ -282,7 +275,7 @@ func NewUser(w http.ResponseWriter, r *http.Request) {
 	// If attempting to create an already-existing user
 	if exists == 1 {
 		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte("Username already in use."))
+		w.Write([]byte("Unavailable username"))
 		return
 	}
 
@@ -318,8 +311,8 @@ func NewUser(w http.ResponseWriter, r *http.Request) {
 
 	expireCookie := time.Now().Add(time.Hour * 1)
 
-	const mySQLDateTime = "2006-01-02 15:04:05"
-	currTime := time.Now().Format(mySQLDateTime)
+	const timeFormat = "2006-01-02 15:04:05"
+	currTime := time.Now().Format(timeFormat)
 
 	result, err := webapp.DataBase.DB.Exec(
 		"INSERT INTO User (Username, PasswordHash) VALUES ('" + data.Username +
@@ -384,7 +377,7 @@ func TestDB(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-// Validate checks user authentication and runs the handler if successful.
+// Validate verifies user authentication and runs the handler if successful.
 func Validate(handler http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		cookie, err := r.Cookie("Auth")
