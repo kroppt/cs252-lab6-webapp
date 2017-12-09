@@ -29,7 +29,7 @@ var routes = []route{
 	route{
 		"/api/loginUser",
 		[]string{"POST"},
-		api.Validate(api.LoginUser),
+		api.LoginUser,
 		"Login User",
 	},
 	route{
