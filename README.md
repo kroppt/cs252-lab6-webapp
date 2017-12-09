@@ -3,7 +3,7 @@ Implementation of a web application using HTML5 and cloud services
 
 ### Prerequisites
 
-[golang](https://golang.org/project/)
+[golang](https://golang.org/)
 
 [npm](https://www.npmjs.com/)
 
@@ -16,12 +16,12 @@ cd cs252-lab6-webapp
 ```
 #### Install node dependencies
 ```
-npm install --global @angular/cli
 cd angular
+npm install --global @angular/cli
 npm install
 ```
 Note: when running install, 2 warnings may appear relating to `@angular-devkit/schematics`. They can be safely ignored.
-#### Run the server
+#### Run the webapp
 ```
 ng serve --open
 ```
