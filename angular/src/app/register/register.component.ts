@@ -9,6 +9,7 @@ import {
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { Http } from '@angular/http';
 import { passwordMatchValidator } from '../shared/password-match.directive';
+import { MatSnackBar } from '@angular/material';
 
 @Component({
   selector: 'app-register',
@@ -18,7 +19,7 @@ import { passwordMatchValidator } from '../shared/password-match.directive';
 export class RegisterComponent {
   title = 'register';
 
-  constructor(private http: Http) { }
+  constructor(private http: Http, private snackBar: MatSnackBar) { }
 
   username = new FormControl(
     '',
@@ -52,9 +53,15 @@ export class RegisterComponent {
         username: this.username.value,
         password: btoa(this.password.value),
       })
-      .subscribe(data => {
-        console.log(data);
-      });
+      .subscribe(
+        data => {
+          console.log(data);
+        },
+        err => {
+          this.snackBar.open(err._body, 'OK', {
+            duration: 2000,
+          });
+        });
     console.log();
     return;
   }
