@@ -189,9 +189,12 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 	const timeFormat = "2006-01-02 15:04:05"
 	currTime := time.Now().Format(timeFormat)
 
-	_, err = webapp.DataBase.DB.Exec("REPLACE INTO UserSession (SessionKey, "+
-		"UserID, LoginTime, LastSeenTime) VALUES (?, ?, ?, ?)", string(key),
-		currTime, rowData.ID, currTime, currTime)
+	_, err = webapp.DataBase.DB.Exec(
+		"INSERT INTO UserSession (SessionKey, UserID, LoginTime, LastSeenTime)"+
+			" VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE"+
+			" (SessionKey, LoginTime, LastSeenTime) ="+
+			" VALUES (SessionKey, LoginTime, LastSeenTime) ", string(key),
+		rowData.ID, currTime, currTime)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
