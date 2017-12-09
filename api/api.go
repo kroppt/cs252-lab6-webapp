@@ -122,8 +122,8 @@ func GetID(w http.ResponseWriter, r *http.Request) {
 // Creates a JWT and puts it into the client's cookie.
 func LoginUser(w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
-	var data *UserModel
-	err := decoder.Decode(data)
+	var data UserModel
+	err := decoder.Decode(&data)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
