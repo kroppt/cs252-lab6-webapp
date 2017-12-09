@@ -16,7 +16,7 @@ func main() {
 	pass, err := ioutil.ReadFile("pass.txt")
 	checkError(err)
 	// remove newline from password
-	db, err := sql.Open("mysql", "server:"+string(pass)[:len(pass)-1]+"@/lab6_db")
+	db, err := sql.Open("mysql", "server:"+string(pass)[:len(pass)-1]+"@/lab6_db?parseTime=true")
 	checkError(err)
 	err = db.Ping()
 	checkError(err)
