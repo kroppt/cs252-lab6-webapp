@@ -1,6 +1,7 @@
 package api
 
 import (
+	"database/sql"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -126,12 +127,14 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 	err := decoder.Decode(&data)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte("Invalid username or password"))
 		return
 	}
 
 	pass10, err := base64.StdEncoding.DecodeString(data.Password)
 	if err != nil {
-		w.WriteHeader(http.StatusUnprocessableEntity)
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte("Invalid username or password"))
 		return
 	}
 	data.Password = string(pass10)
@@ -154,18 +157,17 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 	row := webapp.DataBase.DB.QueryRow(
 		"SELECT ID, PasswordHash FROM User WHERE Username=?", data.Username)
 
-	var rowData struct {
-		ID           int
-		PasswordHash string
-	}
-	err = row.Scan(&rowData)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+	var ID int
+	var rowHash string
+	err = row.Scan(&ID, &rowHash)
+	if err == sql.ErrNoRows {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte("Invalid username or password"))
 		return
 	}
 
 	// check that the password matches the hash
-	err = bcrypt.CompareHashAndPassword([]byte(rowData.PasswordHash),
+	err = bcrypt.CompareHashAndPassword([]byte(rowHash),
 		[]byte(data.Password))
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -191,10 +193,9 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 
 	_, err = webapp.DataBase.DB.Exec(
 		"INSERT INTO UserSession (SessionKey, UserID, LoginTime, LastSeenTime)"+
-			" VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE"+
-			" (SessionKey, LoginTime, LastSeenTime) ="+
-			" VALUES (SessionKey, LoginTime, LastSeenTime) ", string(key),
-		rowData.ID, currTime, currTime)
+			" VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE SessionKey="+
+			"VALUES(SessionKey), LoginTime=VALUES(LoginTime), LastSeenTime="+
+			"VALUES(LastSeenTime)", string(key), ID, currTime, currTime)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
