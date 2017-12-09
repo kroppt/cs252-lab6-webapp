@@ -263,7 +263,7 @@ func NewUser(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Password = string(pass10)
 
-	hash, err := bcrypt.GenerateFromPassword([]byte(data.Password), bcrypt.MaxCost)
+	hash, err := bcrypt.GenerateFromPassword([]byte(data.Password), bcrypt.MinCost)
 	if err != nil {
 		w.WriteHeader(http.StatusUnprocessableEntity)
 		return
@@ -276,9 +276,6 @@ func NewUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	expireCookie := time.Now().Add(time.Hour * 1)
-
-	fmt.Println("just before making key")
 	key := (func() []byte {
 		const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 		seededRand := rand.New(rand.NewSource(time.Now().UnixNano()))
@@ -288,6 +285,8 @@ func NewUser(w http.ResponseWriter, r *http.Request) {
 		}
 		return k
 	})()
+
+	expireCookie := time.Now().Add(time.Hour * 1)
 
 	const mySQLDateTime = "2006-01-02 15:04:05"
 	currTime := time.Now().Format(mySQLDateTime)
@@ -301,20 +300,19 @@ func NewUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	lastID, _ := result.LastInsertId()
-	fmt.Println("just before Query 2")
 	result, err = webapp.DataBase.DB.Exec(
 		"INSERT INTO UserSession (SessionKey," +
 			" UserID," + " LoginTime, LastSeenTime) VALUES(\n'" + string(key) +
 			"',\n " + strconv.FormatInt(lastID, 10) + ",\n '" + currTime +
 			"',\n '" + currTime + "');")
-
-	cookie := http.Cookie{Name: "Auth", Value: string(key), Expires: expireCookie,
-		HttpOnly: true}
-	http.SetCookie(w, &cookie)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+
+	cookie := http.Cookie{Name: "Auth", Value: string(key), Expires: expireCookie,
+		HttpOnly: true}
+	http.SetCookie(w, &cookie)
 	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 }
 
