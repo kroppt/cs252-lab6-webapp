@@ -256,6 +256,36 @@ func NewUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	l := len(data.Username)
+	if !(l < 20 && l > 6) {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte("Incorrect username length."))
+		return
+	}
+
+	l = len(data.Password)
+	if !(l < 50 && l > 10) {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte("Incorrect password length."))
+		return
+	}
+
+	row := webapp.DataBase.DB.QueryRow(
+		"SELECT EXISTS (SELECT 1 FROM User WHERE Username='" + data.Username + "');")
+	var exists int
+	err = row.Scan(&exists)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	// If attempting to create an already-existing user
+	if exists == 1 {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte("Username already in use."))
+		return
+	}
+
 	pass10, err := base64.StdEncoding.DecodeString(data.Password)
 	if err != nil {
 		w.WriteHeader(http.StatusUnprocessableEntity)
