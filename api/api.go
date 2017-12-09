@@ -1,11 +1,12 @@
 package api
 
 import (
-	"crypto/rand"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"math/rand"
 	"net/http"
+	"strconv"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
@@ -248,8 +249,8 @@ func LogoutUser(w http.ResponseWriter, r *http.Request) {
 // and creates a new user with those credentials.
 func NewUser(w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
-	var data *UserModel
-	err := decoder.Decode(data)
+	var data UserModel
+	err := decoder.Decode(&data)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
@@ -277,41 +278,44 @@ func NewUser(w http.ResponseWriter, r *http.Request) {
 
 	expireCookie := time.Now().Add(time.Hour * 1)
 
-	key := make([]byte, 50)
-	_, err = rand.Read(key)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
+	fmt.Println("just before making key")
+	key := (func() []byte {
+		const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+		seededRand := rand.New(rand.NewSource(time.Now().UnixNano()))
+		k := make([]byte, 50)
+		for i := range k {
+			k[i] = charset[seededRand.Intn(len(charset))]
+		}
+		return k
+	})()
 
 	const mySQLDateTime = "2006-01-02 15:04:05"
 	currTime := time.Now().Format(mySQLDateTime)
 
-	rows, err := webapp.DataBase.DB.Query(
-		"INSERT INTO User (Username, PasswordHash) VALUES(" + data.Username +
-			", " + string(hash) + "); INSERT INTO UserSession (SessionKey," +
-			" UserID," + " LoginTime, LastSeenTime) VALUES(" + string(key) +
-			", LAST_INSERT_ID(), " + currTime + ", " + currTime + ");")
+	result, err := webapp.DataBase.DB.Exec(
+		"INSERT INTO User (Username, PasswordHash) VALUES ('" + data.Username +
+			"', '" + string(hash) + "');")
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	defer rows.Close()
+
+	lastID, _ := result.LastInsertId()
+	fmt.Println("just before Query 2")
+	result, err = webapp.DataBase.DB.Exec(
+		"INSERT INTO UserSession (SessionKey," +
+			" UserID," + " LoginTime, LastSeenTime) VALUES(\n'" + string(key) +
+			"',\n " + strconv.FormatInt(lastID, 10) + ",\n '" + currTime +
+			"',\n '" + currTime + "');")
 
 	cookie := http.Cookie{Name: "Auth", Value: string(key), Expires: expireCookie,
 		HttpOnly: true}
 	http.SetCookie(w, &cookie)
-	var output struct {
-		Success bool `json:"success"`
-	}
-	output.Success = true
-	out, err := json.Marshal(output)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
-	w.Write(out)
 }
 
 // PostID will store the string to ID. The ID can be fetched using GetID.
