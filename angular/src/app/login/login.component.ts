@@ -35,9 +35,9 @@ export class LoginComponent implements OnInit {
       Validators.minLength(6),
       Validators.maxLength(20),
     ]
-   );
+  );
 
-   password = new FormControl(
+  password = new FormControl(
     '',
     [
       Validators.required,
@@ -46,9 +46,15 @@ export class LoginComponent implements OnInit {
     ]
   );
 
+  isFormInvalid() {
+    return this.username.invalid || this.password.invalid;
+  }
+
   submit() {
-    this.http
-      .post('http://35.227.48.112/api/loginUser',
+    if (this.isFormInvalid()) {
+      return;
+    }
+    this.http.post('http://35.227.48.112/api/loginUser',
       {
         username: this.username.value,
         password: btoa(this.password.value),
@@ -56,8 +62,7 @@ export class LoginComponent implements OnInit {
       {
         withCredentials: true
       },
-    )
-      .subscribe(
+    ).subscribe(
       data => {
         this.auth.logIn(this.username.value);
         this.router.navigate(['/']);

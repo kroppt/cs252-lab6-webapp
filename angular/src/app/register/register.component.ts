@@ -36,9 +36,9 @@ export class RegisterComponent implements OnInit {
       Validators.minLength(6),
       Validators.maxLength(20),
     ]
-   );
+  );
 
-   password = new FormControl(
+  password = new FormControl(
     '',
     [
       Validators.required,
@@ -54,9 +54,16 @@ export class RegisterComponent implements OnInit {
     ]
   );
 
+  isFormInvalid() {
+    return this.username.invalid || this.password.invalid ||
+      this.passwordVerify.invalid;
+  }
+
   submit() {
-    this.http
-      .post('http://35.227.48.112/api/newUser',
+    if (this.isFormInvalid()) {
+      return;
+    }
+    this.http.post('http://35.227.48.112/api/newUser',
       {
         username: this.username.value,
         password: btoa(this.password.value),
@@ -64,8 +71,7 @@ export class RegisterComponent implements OnInit {
       {
         withCredentials: true
       },
-    )
-      .subscribe(
+    ).subscribe(
       data => {
         this.auth.logIn(this.username.value);
         this.router.navigate(['/']);

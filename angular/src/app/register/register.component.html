@@ -3,7 +3,7 @@
     <mat-card-title>Register New Account</mat-card-title>
   </mat-card-header>
   <mat-form-field class="form">
-    <input matInput placeholder="Username" [formControl]="username" required>
+    <input matInput (keydown.enter)="submit()" placeholder="Username" [formControl]="username" required>
     <mat-error *ngIf="username.invalid">
       <span *ngIf="username.errors.required">
             Username is required.
@@ -17,7 +17,7 @@
     </mat-error>
   </mat-form-field>
   <mat-form-field class="form">
-    <input matInput type="password" placeholder="Password" [formControl]="password" required>
+    <input matInput (keydown.enter)="submit()" type="password" placeholder="Password" [formControl]="password" required>
     <mat-error *ngIf="password.invalid">
       <span *ngIf="password.errors.required">
             Password is required.
@@ -31,7 +31,7 @@
     </mat-error>
   </mat-form-field>
   <mat-form-field class="form">
-    <input matInput type="password" placeholder="Verify Password" [formControl]="passwordVerify" required>
+    <input matInput (keydown.enter)="submit()" type="password" placeholder="Verify Password" [formControl]="passwordVerify" required>
     <mat-error *ngIf="passwordVerify.invalid">
       <span *ngIf="passwordVerify.errors.nomatch">
             Passwords must match.
@@ -39,6 +39,6 @@
     </mat-error>
   </mat-form-field>
   <mat-card-actions style="padding-bottom: 10px;" class="submit">
-    <button [disabled]="username.invalid || password.invalid || passwordVerify.invalid" (click)="submit()" mat-raised-button color="primary">Submit</button>
+    <button [disabled]="isFormInvalid()" (click)="submit()" mat-raised-button color="primary">Submit</button>
   </mat-card-actions>
 </mat-card>
