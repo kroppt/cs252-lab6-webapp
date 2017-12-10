@@ -10,7 +10,7 @@ import (
 // StartServer will start the server using the given port string.
 // Example: http.StartServer(":8080")
 func StartServer(p string) {
-	r := cors.Default().Handler(newRouter())
+	r := cors.New(cors.Options{AllowCredentials: true}).Handler(newRouter())
 	checkError(http.ListenAndServe(p, r))
 }
 
