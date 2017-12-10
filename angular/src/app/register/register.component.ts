@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import {
   FormsModule,
   FormControl,
@@ -11,16 +11,23 @@ import { Http } from '@angular/http';
 import { passwordMatchValidator } from '../shared/password-match.directive';
 import { MatSnackBar } from '@angular/material';
 import { Router } from '@angular/router';
+import { AuthService } from '../auth/auth.service';
 
 @Component({
   selector: 'app-register',
   templateUrl: './register.component.html',
   styleUrls: ['./register.component.css'],
+  providers: [AuthService],
 })
-export class RegisterComponent {
+export class RegisterComponent implements OnInit {
   title = 'register';
 
-  constructor(private router:Router, private http: Http, private snackBar: MatSnackBar) { }
+  constructor(
+    private auth: AuthService,
+    private router: Router,
+    private http: Http,
+    private snackBar: MatSnackBar,
+  ) { }
 
   username = new FormControl(
     '',
@@ -53,9 +60,14 @@ export class RegisterComponent {
       {
         username: this.username.value,
         password: btoa(this.password.value),
-      })
+      },
+      {
+        withCredentials: true
+      },
+    )
       .subscribe(
       data => {
+        this.auth.logIn(this.username.value);
         this.router.navigate(['/']);
       },
       err => {
@@ -72,6 +84,12 @@ export class RegisterComponent {
         });
       });
     return;
+  }
+
+  ngOnInit() {
+    if (this.auth.isLoggedIn()) {
+      this.router.navigate(['/']);
+    }
   }
 
 }

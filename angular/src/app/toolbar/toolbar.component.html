@@ -7,11 +7,11 @@
       inspireGL
     </span>
   </div>
-  <div class="item right" *ngIf="this.isLoggedIn">
+  <div class="item right" *ngIf="auth.isLoggedIn()">
     <button (click)="newEntry()" mat-raised-button color="accent">New Entry</button>
     <button (click)="logout()" mat-raised-button color="accent">Logout</button>
   </div>
-  <div class="item right" *ngIf="!this.isLoggedIn">
+  <div class="item right" *ngIf="!auth.isLoggedIn()">
     <button (click)="signUp()" mat-raised-button color="accent">Sign Up</button>
     <button (click)="login()" mat-raised-button color="accent">Login</button>
   </div>

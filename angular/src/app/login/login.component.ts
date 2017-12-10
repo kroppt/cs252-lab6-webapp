@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import {
   FormsModule,
   FormControl,
@@ -10,16 +10,23 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { Http } from '@angular/http';
 import { MatSnackBar } from '@angular/material';
 import { Router } from '@angular/router';
+import { AuthService } from '../auth/auth.service';
 
 @Component({
   selector: 'app-login',
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.css'],
+  providers: [AuthService],
 })
-export class LoginComponent {
+export class LoginComponent implements OnInit {
   title = 'login';
 
-  constructor(private router:Router, private http: Http, private snackBar: MatSnackBar) { }
+  constructor(
+    private auth: AuthService,
+    private router: Router,
+    private http: Http,
+    private snackBar: MatSnackBar,
+  ) { }
 
   username = new FormControl(
     '',
@@ -45,9 +52,14 @@ export class LoginComponent {
       {
         username: this.username.value,
         password: btoa(this.password.value),
-      })
+      },
+      {
+        withCredentials: true
+      },
+    )
       .subscribe(
       data => {
+        this.auth.logIn(this.username.value);
         this.router.navigate(['/']);
       },
       err => {
@@ -65,4 +77,11 @@ export class LoginComponent {
       });
     return;
   }
+
+  ngOnInit() {
+    if (this.auth.isLoggedIn()) {
+      this.router.navigate(['/']);
+    }
+  }
+
 }

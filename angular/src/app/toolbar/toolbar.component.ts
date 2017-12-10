@@ -1,24 +1,19 @@
-import { Component, OnInit, ViewEncapsulation } from '@angular/core';
-import { CookieService } from 'ngx-cookie-service';
+import { Component, ViewEncapsulation } from '@angular/core';
 import { Router } from '@angular/router';
+import { AuthService } from '../auth/auth.service';
 
 @Component({
   selector: 'app-toolbar',
   templateUrl: './toolbar.component.html',
-  styleUrls: ['./toolbar.component.css']
+  styleUrls: ['./toolbar.component.css'],
+  providers: [AuthService],
 })
-export class ToolbarComponent implements  OnInit {
+export class ToolbarComponent {
   title = 'toolbar';
-  isLoggedIn: boolean = null;
-  constructor( private cookieService: CookieService, private router: Router ) {}
-  ngOnInit(): void {
-    if (this.cookieService.get('Name') === 'Auth' &&
-      this.cookieService.get('Value') != null) {
-        this.isLoggedIn = true;
-    } else {
-      this.isLoggedIn = false;
-    }
-  }
+  constructor(
+    private auth: AuthService,
+    private router: Router,
+  ) {}
   home(): void {
     this.router.navigateByUrl('/home');
   }

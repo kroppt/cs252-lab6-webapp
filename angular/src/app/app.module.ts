@@ -11,7 +11,6 @@ import { NotFoundComponent } from './not-found/not-found.component';
 import { SignupComponent } from './signup/signup.component';
 import { HttpModule } from '@angular/http';
 import { RouterModule, Routes } from '@angular/router';
-import { CookieService } from 'ngx-cookie-service';
 import { ToolbarComponent } from './toolbar/toolbar.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import 'hammerjs';
@@ -50,6 +49,7 @@ import {
   MatStepperModule,
 } from '@angular/material';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { AuthService } from './auth/auth.service';
 
 @NgModule({
   exports: [
@@ -144,8 +144,8 @@ const appRoutes: Routes = [
       { enableTracing: true } // <-- debugging purposes only
     )
   ],
-  providers: [CookieService],
-  bootstrap: [AppComponent]
+  providers: [AuthService],
+  bootstrap: [AppComponent],
 })
 export class AppModule {
 }
