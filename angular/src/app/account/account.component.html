@@ -1,2 +1,39 @@
-<div>
-</div>
+<mat-card class="card">
+    <mat-card-header class="card-header">
+        <mat-card-title>Account</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+        <mat-accordion multi="true">
+            <mat-expansion-panel>
+                <mat-expansion-panel-header>
+                    <mat-panel-title>
+                        Username
+                    </mat-panel-title>
+                    <mat-panel-description>
+                        Show Username
+                    </mat-panel-description>
+                </mat-expansion-panel-header>
+                <mat-form-field>
+                    <input matInput class="form" [formControl]="username">
+                </mat-form-field>
+            </mat-expansion-panel>
+            <mat-expansion-panel>
+                <mat-expansion-panel-header>
+                    <mat-panel-title>
+                        Password
+                    </mat-panel-title>
+                    <mat-panel-description>
+                        Change password
+                    </mat-panel-description>
+                </mat-expansion-panel-header>
+                <mat-form-field class="form">
+                    <input matInput placeholder="New Password" [formControl]="password" required>
+                </mat-form-field>
+                <mat-form-field class="form">
+                    <input matInput placeholder="Verify New Password" [formControl]="passwordVerify" required>
+                </mat-form-field>
+                <button [disabled]="isFormInvalid()" (click)="submit()" mat-raised-button color="primary">Submit</button>
+            </mat-expansion-panel>
+        </mat-accordion>
+    </mat-card-content>
+</mat-card>

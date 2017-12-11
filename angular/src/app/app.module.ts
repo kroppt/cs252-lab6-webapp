@@ -90,7 +90,7 @@ export class MaterialModule {}
 
 const appRoutes: Routes = [
   {
-    path: 'account/:id',
+    path: 'account',
     component: AccountComponent,
   },
   {
