@@ -136,8 +136,8 @@ func ChangePassword(w http.ResponseWriter, r *http.Request) {
 		DataBase.DB.QueryRow("SELECT User.ID "+
 		" FROM User LEFT JOIN UserSession ON (User.ID=UserSession.UserID)"+
 		" WHERE UserSession.SessionKey=?", cookie.Value)
-	var UserID int
-	err = row.Scan(&UserID)
+	var userID int
+	err = row.Scan(&userID)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -163,32 +163,8 @@ func ChangePassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	key := (func() []byte {
-		const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-		seededRand := rand.New(rand.NewSource(time.Now().UnixNano()))
-		k := make([]byte, 50)
-		for i := range k {
-			k[i] = charset[seededRand.Intn(len(charset))]
-		}
-		return k
-	})()
-
-	const timeFormat = "2006-01-02 15:04:05"
-	currTime := time.Now().Format(timeFormat)
-
-	result, err := webapp.DataBase.DB.Exec(
-		"INSERT INTO User (Username, PasswordHash) VALUES (?, ?)",
-		data.Username, string(hash))
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	lastID, _ := result.LastInsertId()
-	result, err = webapp.DataBase.DB.Exec(
-		"INSERT INTO UserSession (SessionKey, UserID, LoginTime, LastSeenTime)"+
-			" VALUES(?, ?, ?, ?)",
-		string(key), strconv.FormatInt(lastID, 10), currTime, currTime)
+	_, err = webapp.DataBase.DB.Exec(
+		"UPDATE User SET PasswordHash=? WHERE User.ID=?", string(hash), userID)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -481,22 +457,20 @@ func Validate(handler http.HandlerFunc) http.HandlerFunc {
 		row := webapp.
 			DataBase.DB.QueryRow("SELECT User.ID, UserSession.SessionKey"+
 			" FROM User LEFT JOIN UserSession ON (User.ID=UserSession.UserID)"+
-			" WHERE UserSession.SessionKey=?", cookie.Value)
-		var data struct {
-			UserID     int
-			SessionKey string
-		}
-		err = row.Scan(&data)
+			" WHERE UserSession.SessionKey='?'", cookie.Value)
+		var userID int
+		var sessionKey string
+		err = row.Scan(&userID, &sessionKey)
 		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
+			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
-		if data.SessionKey == cookie.Value {
+		if sessionKey == cookie.Value {
 			const mySQLDateTime = "2006-01-02 15:04:05"
 			currTime := time.Now().Format(mySQLDateTime)
 			_, err = webapp.DataBase.DB.Exec("UPDATE UserSession SET"+
 				" LastSeenTime=? WHERE UserSession.UserID=?",
-				currTime, string(data.UserID))
+				currTime, string(userID))
 			if err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
 				return
