@@ -457,7 +457,7 @@ func Validate(handler http.HandlerFunc) http.HandlerFunc {
 		row := webapp.
 			DataBase.DB.QueryRow("SELECT User.ID, UserSession.SessionKey"+
 			" FROM User LEFT JOIN UserSession ON (User.ID=UserSession.UserID)"+
-			" WHERE UserSession.SessionKey='?'", cookie.Value)
+			" WHERE UserSession.SessionKey=?", cookie.Value)
 		var userID int
 		var sessionKey string
 		err = row.Scan(&userID, &sessionKey)
