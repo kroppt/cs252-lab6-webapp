@@ -57,9 +57,9 @@ func AuthUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	rows, err := webapp.DataBase.DB.Query(
-		"SELECT User.PasswordHash, UserSession.SessionKey FROM User LEFT JOIN" +
-			" UserSession ON (User.ID=UserSession.UserID) WHERE Username=" +
-			data.Username)
+		"SELECT User.PasswordHash, UserSession.SessionKey FROM User LEFT JOIN"+
+			" UserSession ON (User.ID=UserSession.UserID) WHERE Username=?",
+		data.Username)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -106,6 +106,95 @@ func AuthUser(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Write(out)
 	}
+	return
+}
+
+// ChangePassword updates an existing user with a new password based on
+// authentication token in use.
+func ChangePassword(w http.ResponseWriter, r *http.Request) {
+	decoder := json.NewDecoder(r.Body)
+	var data UserModel
+	err := decoder.Decode(&data)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	cookie, err := r.Cookie("Auth")
+	if err != nil {
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
+	l := len(data.Password)
+	if !(l <= 50 && l >= 10) {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte("Incorrect password length"))
+		return
+	}
+
+	row := webapp.
+		DataBase.DB.QueryRow("SELECT User.ID "+
+		" FROM User LEFT JOIN UserSession ON (User.ID=UserSession.UserID)"+
+		" WHERE UserSession.SessionKey=?", cookie.Value)
+	var UserID int
+	err = row.Scan(&UserID)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	pass10, err := base64.StdEncoding.DecodeString(data.Password)
+	if err != nil {
+		w.WriteHeader(http.StatusUnprocessableEntity)
+		return
+	}
+	data.Password = string(pass10)
+
+	hash, err := bcrypt.GenerateFromPassword([]byte(data.Password), bcrypt.MinCost)
+	if err != nil {
+		w.WriteHeader(http.StatusUnprocessableEntity)
+		return
+	}
+
+	// check that conversion back is successful
+	err = bcrypt.CompareHashAndPassword([]byte(hash), []byte(data.Password))
+	if err != nil {
+		w.WriteHeader(http.StatusUnprocessableEntity)
+		return
+	}
+
+	key := (func() []byte {
+		const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+		seededRand := rand.New(rand.NewSource(time.Now().UnixNano()))
+		k := make([]byte, 50)
+		for i := range k {
+			k[i] = charset[seededRand.Intn(len(charset))]
+		}
+		return k
+	})()
+
+	const timeFormat = "2006-01-02 15:04:05"
+	currTime := time.Now().Format(timeFormat)
+
+	result, err := webapp.DataBase.DB.Exec(
+		"INSERT INTO User (Username, PasswordHash) VALUES (?, ?)",
+		data.Username, string(hash))
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	lastID, _ := result.LastInsertId()
+	result, err = webapp.DataBase.DB.Exec(
+		"INSERT INTO UserSession (SessionKey, UserID, LoginTime, LastSeenTime)"+
+			" VALUES(?, ?, ?, ?)",
+		string(key), strconv.FormatInt(lastID, 10), currTime, currTime)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
 	return
 }
 
@@ -223,7 +312,7 @@ func LogoutUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	_, err = webapp.DataBase.DB.Query(
-		"DELETE FROM User WHERE UserSession.SessionKey=" + cookie.Value)
+		"DELETE FROM User WHERE UserSession.SessionKey=?", cookie.Value)
 	if err != nil {
 		w.WriteHeader(http.StatusNotModified)
 		return
@@ -268,7 +357,7 @@ func NewUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	row := webapp.DataBase.DB.QueryRow(
-		"SELECT EXISTS (SELECT 1 FROM User WHERE Username='" + data.Username + "');")
+		"SELECT EXISTS (SELECT 1 FROM User WHERE Username=?)", data.Username)
 	var exists int
 	err = row.Scan(&exists)
 	if err != nil {
@@ -319,8 +408,8 @@ func NewUser(w http.ResponseWriter, r *http.Request) {
 	currTime := time.Now().Format(timeFormat)
 
 	result, err := webapp.DataBase.DB.Exec(
-		"INSERT INTO User (Username, PasswordHash) VALUES ('" + data.Username +
-			"', '" + string(hash) + "');")
+		"INSERT INTO User (Username, PasswordHash) VALUES (?, ?)",
+		data.Username, string(hash))
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -328,10 +417,9 @@ func NewUser(w http.ResponseWriter, r *http.Request) {
 
 	lastID, _ := result.LastInsertId()
 	result, err = webapp.DataBase.DB.Exec(
-		"INSERT INTO UserSession (SessionKey," +
-			" UserID," + " LoginTime, LastSeenTime) VALUES(\n'" + string(key) +
-			"',\n " + strconv.FormatInt(lastID, 10) + ",\n '" + currTime +
-			"',\n '" + currTime + "');")
+		"INSERT INTO UserSession (SessionKey, UserID, LoginTime, LastSeenTime)"+
+			" VALUES(?, ?, ?, ?)",
+		string(key), strconv.FormatInt(lastID, 10), currTime, currTime)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -390,29 +478,25 @@ func Validate(handler http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 		// SessionKey
-		rows, err := webapp.
-			DataBase.DB.Query("SELECT User.ID, UserSession.SessionKey" +
-			" FROM User LEFT JOIN UserSession ON (User.ID=UserSession.UserID)" +
-			" WHERE UserSession.SessionKey=" + cookie.Value)
-		if err != nil {
-			w.WriteHeader(http.StatusUnauthorized)
-			return
-		}
+		row := webapp.
+			DataBase.DB.QueryRow("SELECT User.ID, UserSession.SessionKey"+
+			" FROM User LEFT JOIN UserSession ON (User.ID=UserSession.UserID)"+
+			" WHERE UserSession.SessionKey=?", cookie.Value)
 		var data struct {
 			UserID     int
 			SessionKey string
 		}
-		err = rows.Scan(&data)
+		err = row.Scan(&data)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
-		rows.Close()
 		if data.SessionKey == cookie.Value {
 			const mySQLDateTime = "2006-01-02 15:04:05"
 			currTime := time.Now().Format(mySQLDateTime)
-			_, err = webapp.DataBase.DB.Query("UPDATE UserSession SET LastSeenTime=" +
-				currTime + " WHERE UserSession.UserID=" + string(data.UserID))
+			_, err = webapp.DataBase.DB.Exec("UPDATE UserSession SET"+
+				" LastSeenTime=? WHERE UserSession.UserID=?",
+				currTime, string(data.UserID))
 			if err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
 				return

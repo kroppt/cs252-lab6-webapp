@@ -21,10 +21,10 @@ var routes = []route{
 		"Authenticate User",
 	},
 	route{
-		"/",
-		[]string{"GET"},
-		api.GetID,
-		"Get ID",
+		"/api/changePassword",
+		[]string{"POST"},
+		api.Validate(api.ChangePassword),
+		"Update existing password",
 	},
 	route{
 		"/api/loginUser",
@@ -43,6 +43,12 @@ var routes = []route{
 		[]string{"POST"},
 		api.NewUser,
 		"New User",
+	},
+	route{
+		"/",
+		[]string{"GET"},
+		api.GetID,
+		"Get ID",
 	},
 	route{
 		"/",
